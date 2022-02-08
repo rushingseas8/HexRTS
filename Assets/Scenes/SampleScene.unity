@@ -222,6 +222,7 @@ GameObject:
   - component: {fileID: 793001818}
   - component: {fileID: 793001817}
   - component: {fileID: 793001819}
+  - component: {fileID: 793001820}
   m_Layer: 0
   m_Name: Game Manager
   m_TagString: Untagged
@@ -276,6 +277,10 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 2c8fd689829110344a7a66cf3dc3893b, type: 2}
   - {fileID: 2100000, guid: a08908c8a9e044b47b15fd943db1759e, type: 2}
   - {fileID: 2100000, guid: a51238de5c43d4e4e872264236cfe1aa, type: 2}
+  improvements:
+  - {fileID: 0}
+  - {fileID: 7788487642897114276, guid: 7fc8a4255ee413b48ad67d1aa1cdcee8, type: 3}
+  - {fileID: 8592383082572747858, guid: 530c69f195e2ea64dbca2d07f29fbd23, type: 3}
   noiseGenerator:
     octaves: 8
     frequency: 0.05
@@ -285,6 +290,18 @@ MonoBehaviour:
     zOffset: 0.2
   width: 121
   height: 61
+--- !u!114 &793001820
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 793001816}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54b8a0570ad34de42b99f3a16f4962d0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0

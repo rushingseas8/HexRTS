@@ -22,6 +22,9 @@ public class WorldGenerator : MonoBehaviour
     public Material[] materials;
 
     [SerializeField]
+    public GameObject[] improvements;
+
+    [SerializeField]
     public PerlinGenerator noiseGenerator;
     
     [SerializeField]
@@ -139,7 +142,7 @@ public class WorldGenerator : MonoBehaviour
     public TileType MakeBeaches(TileType[,] tiles, int x, int z)
     {
         // Get our tile
-        TileType ourTile = tiles[x,z];
+        TileType ourTile = tiles[x, z];
         // If we are not grass (i.e., water) then ignore.
         if (ourTile != TileType.Grass)
         {
@@ -154,6 +157,26 @@ public class WorldGenerator : MonoBehaviour
         }
 
         // Landlocked, so just return grass.
+        return ourTile;
+    }
+
+    public TileType MakeForests(TileType[,] tiles, int x, int z)
+    {
+        TileType ourTile = tiles[x, z];
+        if (ourTile._material == TileType.MaterialType.Grass && !ourTile.HasImprovement())
+        {
+            int rand = Random.Range(0, 100);
+            // Lumber camp is a visual test
+            if (rand < 5)
+            {
+                return TileType.LumberCamp;
+            }
+            // 80% chance that grass turns into forest
+            else if (rand < 80)
+            {
+                return TileType.Forest;
+            }
+        }
         return ourTile;
     }
 
@@ -179,6 +202,7 @@ public class WorldGenerator : MonoBehaviour
         {
             new WorldGenTransform(BasicGeneration),
             new WorldGenTransform(MakeBeaches),
+            new WorldGenTransform(MakeForests),
         };
 
         // Iterate through each transform
@@ -211,42 +235,45 @@ public class WorldGenerator : MonoBehaviour
         {
             for (int j = 0; j < tiles.GetLength(1); j++)
             {
+                TileType tile = tiles[i, j];
+
                 OffsetCoord coord = new OffsetCoord(j - (height - 1) / 2, i - (width - 1) / 2);
                 HexCoord hexCoord = coord.ToHexCoord();
 
                 GameObject newHex = GameObject.Instantiate(hexagon);
-                newHex.GetComponent<HexCell>().coord = hexCoord;
-
+                HexCell cell = newHex.GetComponent<HexCell>();
+                cell.coord = hexCoord;
+                cell.tileType = tile;
+                
+                // Some height generation.
                 float heightOffset = 0;
-                if (tiles[i, j] != TileType.Water)
+                if (tile != TileType.Water)
                 {
                     heightOffset = -6 * (noiseGenerator.GetValueNormalized(i, j) - 0.5f);
                     heightOffset = (int)(heightOffset * 4) / 4.0f;
                     heightOffset += 0.25f;
                 }
 
-                if (tiles[i, j] == TileType.Grass)
-                {
-                    if (Random.Range(0f, 1f) < 0.05f)
-                    {
-                        GameObject newCamp = GameObject.Instantiate(camp);
-                        newCamp.transform.SetParent(newHex.transform);
-                        newCamp.isStatic = true;
-                           
-                    }
-                    else if (Random.Range(0f, 1f) < 0.8f)
-                    {
-                        GameObject newTree = GameObject.Instantiate(tree);
-                        newTree.transform.SetParent(newHex.transform);
-                        newTree.isStatic = true;
-                    }
-                }
-
-                // TODO add verticality?
+                // Add the hex coord to the world, add some height offset
                 newHex.transform.position = hexCoord.ToWorld() + new Vector3(0, heightOffset, 0);
+                // Randomize its rotation to any 60 degree interval
                 newHex.transform.rotation = Quaternion.AngleAxis(Random.Range(0, 6) * 60, Vector3.up);
-                newHex.transform.GetChild(0).GetComponent<MeshRenderer>().material = materials[tiles[i, j]];
+                // Pick its material based on its tile type
+                newHex.transform.GetChild(0).GetComponent<MeshRenderer>().material = materials[(int) tile._material];
+                // Make sure it gets batched
                 newHex.isStatic = true;
+
+                // Do we generate an improvement here?
+                if (tile._improvement != TileType.ImprovementType.Empty)
+                {
+                    // Let's create a new one and parent it to the newly generated hex.
+                    GameObject improvement = GameObject.Instantiate(improvements[(int) tile._improvement]);
+                    improvement.transform.SetParent(newHex.transform);
+                    // Set its position/rotation
+                    improvement.transform.position = hexCoord.ToWorld() + new Vector3(0, heightOffset, 0);
+                    improvement.transform.rotation = Quaternion.AngleAxis(Random.Range(0, 6) * 60, Vector3.up);
+                    improvement.isStatic = true;
+                }
             }
         }
     }
