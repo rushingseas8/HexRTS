@@ -5,7 +5,10 @@ using UnityEngine;
 public class CameraController : MonoBehaviour
 {
     // Handle on the camera GameObject
-    public static GameObject worldCamera;
+    //public static GameObject worldCamera;
+
+    [SerializeField]
+    public Camera controlledCamera;
 
     // How much of a border around the edge is a trigger for camera movement
     public const float HorizontalScrollBorder = 0.15f;
@@ -19,7 +22,7 @@ public class CameraController : MonoBehaviour
     public static readonly Vector3 MaxVerticalScroll = new Vector3(0, 0, 9f);
 
     // Float from [0, 1] that determines how zoomed in we are. 0 is close, 1 is far.
-    public float zoomLevel = 0;
+    public float zoomLevel = 0.33f;
 
     // The point that the camera is looking at.
     public Vector3 lookatPoint = Vector3.zero;
@@ -27,13 +30,18 @@ public class CameraController : MonoBehaviour
     // The offset position from the lookatPoint that the camera is at.
     public static readonly Vector3 CameraOffsetVector = new Vector3(0, 7.5f, -10f);
 
+    [SerializeField]
+    public GameObject mouseCursor;
+
+    // Which cell is currently being hovered over, if any.
+    public HexCell selectedCell;
+
     // Start is called before the first frame update
     void Start()
     {
         // Init camera
-        worldCamera = GameObject.Find("Main Camera");
-        worldCamera.transform.position = new Vector3(0, 7.5f, 0);
-        worldCamera.transform.rotation = Quaternion.AngleAxis(45, Vector3.right);
+        controlledCamera.transform.position = new Vector3(0, 7.5f, 0);
+        controlledCamera.transform.rotation = Quaternion.AngleAxis(45, Vector3.right);
     }
 
     // Update is called once per frame
@@ -48,7 +56,7 @@ public class CameraController : MonoBehaviour
         Vector3 moveDelta = Vector3.zero;
 
         // Based on how zoomed out we are, we should move faster or slower.
-        float moveScale = Mathf.Lerp(1.0f, 2.0f, zoomLevel);
+        float moveScale = Mathf.Lerp(0.5f, 2.0f, zoomLevel);
 
         if (mousePos.x < Screen.width * HorizontalScrollBorder)
         {
@@ -103,7 +111,108 @@ public class CameraController : MonoBehaviour
         // Move the camera target point
         lookatPoint += (Time.deltaTime * moveDelta);
         // Adjust the camera position to be the target + (zoom level * default offset vector).
-        worldCamera.transform.position = lookatPoint + (moveScale * CameraOffsetVector);
+        controlledCamera.transform.position = lookatPoint + (moveScale * CameraOffsetVector);
+
+        //Vector3 mousePos3d = new Vector3(Input.mousePosition.x, Input.mousePosition.y, 10f);
+        //Vector3 mouseWorldPos3d = worldCamera.GetComponent<Camera>().ScreenToWorldPoint(mousePos3d);
+        ////if (mouseCursor != null)
+        ////{
+        ////    mouseCursor.transform.position = mouseWorldPos3d;
+        ////}
+        ////Debug.Log($"Mouse pos in world: {mouseWorldPos3d}");
+
+        //if (Physics.Raycast(
+        //    mouseWorldPos3d, 
+        //    -CameraOffsetVector, 
+        //    out RaycastHit hit, 
+        //    Mathf.Infinity, 
+        //    LayerMask.GetMask("Terrain")))
+        //{
+        //    GameObject hitObj = hit.collider.gameObject;
+        //    if (hitObj != null)
+        //    {
+        //        //Debug.Log($"Object: {hitObj}");
+        //        HexCell cell = hitObj.GetComponentInParent<HexCell>();
+        //        if (cell != null)
+        //        {
+        //            Debug.Log($"Hovering over {cell.coord.ToString()}");
+        //            mouseCursor.transform.position = hitObj.transform.position;
+        //        }
+        //    }
+        //}
+
+        // Ray from mouse position in 3d space in the direction camera is looking
+        Ray ray = controlledCamera.ScreenPointToRay(Input.mousePosition);
+        
+        // Raycast forward until we hit a terrain object
+        if (Physics.Raycast(ray, out RaycastHit hit, LayerMask.GetMask("Terrain"))) {
+            GameObject hitObject = hit.transform.gameObject;
+            HexCell hitCell = hitObject.GetComponentInParent<HexCell>() ?? null;
+            
+            if (hitCell != null)
+            {
+                //Debug.Log($"Hit object: {hitCell}");
+                // Move the cursor (slightly above) the terrain object hit
+                mouseCursor.transform.position = hitObject.transform.position + new Vector3(0, 0.01f, 0);
+                selectedCell = hitCell;
+            }
+        }
+        if (selectedCell != null)
+        {
+            OffsetCoord hitCoord = selectedCell.coord.ToOffsetCoord();
+            GameManager manager = GameObject.Find("Game Manager").GetComponent<GameManager>();
+            if (Input.GetMouseButtonDown(0))
+            {
+                if (selectedCell.tileType == TileType.Grass)
+                {
+                    //Debug.Log("Replacing with lumber camp");
+                    if (!manager.resourceManager.CanAffordTile(TileType.House))
+                    {
+                        Debug.Log("Can't afford to place a house down.");
+                    }
+                    else
+                    {
+                        manager.worldGenerator.ReplaceTile(
+                            GameManager.allCells, 
+                            GameManager.allTiles, 
+                            hitCoord.x,
+                            hitCoord.y,
+                            TileType.House);
+                    }
+
+                }
+                
+                if (selectedCell.tileType == TileType.Forest)
+                {
+                    if (!manager.resourceManager.CanAffordTile(TileType.House))
+                    {
+                        Debug.Log("Can't afford to place a lumber camp down.");
+                    }
+                    else
+                    {
+                        manager.worldGenerator.ReplaceTile(
+                            GameManager.allCells, 
+                            GameManager.allTiles, 
+                            hitCoord.x,
+                            hitCoord.y,
+                            TileType.LumberCamp);
+
+                    }
+                    //Debug.Log("Replacing with lumber camp");
+                }
+            } else if (Input.GetMouseButtonUp(0))
+            {
+                //Debug.Log("Replacing with forest");
+                //manager.worldGenerator.ReplaceTile(
+                //    GameManager.allCells, 
+                //    GameManager.allTiles, 
+                //    hitCoord.x,
+                //    hitCoord.y,
+                //    TileType.Forest);
+
+            }
+
+        }
         
     }
 }

@@ -44,4 +44,9 @@ public class HexCoord
         int y = r + (q + (q & 1)) / 2;
         return new OffsetCoord(x, y);
     }
+
+    public override string ToString()
+    {
+        return $"HexCoord[{q},{r},{s}] = {ToOffsetCoord().ToString()}";
+    }
 }

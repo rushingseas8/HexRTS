@@ -22,4 +22,9 @@ public class OffsetCoord
         int r = x - (y + (y & 1)) / 2;
         return new HexCoord(q, r, -q - r);
     }
+
+    public override string ToString()
+    {
+        return $"OffsetCoord[{x},{y}]";
+    }
 }

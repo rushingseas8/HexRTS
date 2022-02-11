@@ -8,6 +8,12 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     public WorldGenerator worldGenerator;
 
+    [SerializeField]
+    public ResourceManager resourceManager;
+
+    public static TileType[,] allTiles;
+    public static HexCell[,] allCells;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -53,9 +59,10 @@ public class GameManager : MonoBehaviour
         //    newHex.transform.GetChild(0).GetComponent<MeshRenderer>().material = materials[Random.Range(0, materials.Length)];
         //}
 
-        TileType[,] tiles = worldGenerator.Generate();
-        worldGenerator.CreateGameObjects(tiles);
+        allTiles = worldGenerator.Generate();
+        allCells = worldGenerator.CreateGameObjects(allTiles);
 
+        resourceManager.InitializeChanges(allTiles);
         
     }
 

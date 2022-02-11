@@ -10,4 +10,10 @@ public class HexCell : MonoBehaviour
 
     [SerializeField]
     public TileType tileType;
+
+    [SerializeField]
+    public GameObject tile;
+
+    [SerializeField]
+    public GameObject improvement;
 }
