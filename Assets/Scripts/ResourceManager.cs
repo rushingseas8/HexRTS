@@ -13,7 +13,7 @@ public class ResourceManager : MonoBehaviour
     [SerializeField]
     public ResourceUI[] resourceEntries;
 
-    public GameObject[] resourceGameObjects;
+    public ResourceEntry[] resourceGameObjects;
 
     // Status of all current resources in the game.
     public static Resource[] resources;
@@ -41,10 +41,14 @@ public class ResourceManager : MonoBehaviour
         [SerializeField]
         public Sprite image;
 
-        public ResourceUI(string name, Sprite image)
+        [SerializeField]
+        public string hoverText;
+
+        public ResourceUI(string name, Sprite image, string hoverText)
         {
             this.name = name;
             this.image = image;
+            this.hoverText = hoverText;
         }
     }
 
@@ -58,6 +62,8 @@ public class ResourceManager : MonoBehaviour
     };
 
     private static readonly Dictionary<ResourceType, Resource> resourceIndexMap = new Dictionary<ResourceType, Resource>();
+
+    private static Dictionary<ResourceType, ResourceEntry> resourceToUIMap = new Dictionary<ResourceType, ResourceEntry>();
 
     /// <summary>
     /// Static initializer to set up some data we'll use.
@@ -98,20 +104,25 @@ public class ResourceManager : MonoBehaviour
     void Start()
     {
         // TODO UI stuff (stinky)
-        //resourceGameObjects = new GameObject[allResources.Length];
-        //for (int resource = 0; resource < allResources.Length; resource++)
-        //{
-        //    GameObject newResource = GameObject.Instantiate(resourceEntry);
-        //    resourceGameObjects[resource] = newResource;
-        //    newResource.transform.SetParent(resourceBar.transform, worldPositionStays: false);
+        resourceGameObjects = new ResourceEntry[allResourceTypes.Length];
+        for (int resource = 0; resource < allResourceTypes.Length; resource++)
+        {
+            GameObject newResource = GameObject.Instantiate(resourceEntry);
+            //resourceGameObjects[resource] = newResource;
+            newResource.transform.SetParent(resourceBar.transform, worldPositionStays: false);
 
-        //    ResourceEntry entry = newResource.GetComponent<ResourceEntry>();
-        //    entry.resourceName = resources[resource].name;
-        //    //Debug.Log($"{resources[resource].image.name}");
-        //    entry.resourceSprite = resources[resource].image;
+            ResourceEntry entry = newResource.GetComponent<ResourceEntry>();
+            resourceGameObjects[resource] = entry;
+            resourceToUIMap.Add(allResourceTypes[resource], entry);
 
-        //    entry.Refresh();
-        //}
+            //entry.resourceInfo = resourceEntries[resource].name;
+            Resource res = resourceIndexMap[allResourceTypes[resource]];
+            entry.resourceInfo = $"{res.amount} (+{res.change})";
+            entry.resourceSprite = resourceEntries[resource].image;
+            entry.hover.hoverText = resourceEntries[resource].hoverText;
+
+            entry.Refresh();
+        }
     }
 
     // Update is called once per frame
@@ -152,20 +163,22 @@ public class ResourceManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns true iff we can afford to place the tile.
+    /// Returns null iff we can afford to place the tile.
+    /// 
+    /// Otherwise, returns the resoruce missing.
     /// </summary>
     /// <param name="newTile"></param>
     /// <returns></returns>
-    public bool CanAffordTile(TileType newTile)
+    public ResourceType? CanAffordTile(TileType newTile)
     {
         for (int i = 0; i < resources.Length; i++)
         {
             if (resources[i].amount - newTile.costsOnce[i] < 0)
             {
-                return false;
+                return resources[i].resourceType;
             }
         }
-        return true;
+        return null;
     }
 
     /// <summary>
@@ -175,6 +188,8 @@ public class ResourceManager : MonoBehaviour
     /// <param name="newTile"></param>
     public void UpdateTile(TileType oldTile, TileType newTile)
     {
+        UpdateResources();
+
         for (int i = 0; i < oldTile.producesPerTurn.Length; i++)
         {
             // Remove any previous production/costs
@@ -208,9 +223,9 @@ public class ResourceManager : MonoBehaviour
         //    resources[1].amount += 1;
         //}
 
-        // Testing updates per turn.
+        // Update all existing resources.
         // TODO determine if we want per-turn or continuous updates.
-        UpdateResources();
+        UpdateResourceUI();
         
         foreach (Resource resource in resources)
         {
@@ -226,11 +241,42 @@ public class ResourceManager : MonoBehaviour
         foreach (Resource resource in resources)
         {
             resource.amount += resource.change;
+
+            // Update UI entries. First we grab the appropriate UI element
+            //ResourceEntry entry = resourceToUIMap[resource.resourceType];
+            //// Then we set its text
+            //Debug.Log($"Updating resource type {resource.resourceType}");
+            //entry.resourceInfo = $"{resource.amount} (+{resource.change})";
+            //entry.Refresh();
         }
 
-        resourceIndexMap[ResourceType.Population].amount = PopulationForFood(resourceIndexMap[ResourceType.Food].amount);
-        Debug.Log($"We now have a population of {resourceIndexMap[ResourceType.Food].amount} " +
-            $"based on {resourceIndexMap[ResourceType.Population].amount} food.");
+        // population = min(food2Pop(food), housing)
+        resourceIndexMap[ResourceType.Population].amount = Mathf.Min(
+            PopulationForFood(resourceIndexMap[ResourceType.Food].amount),
+            resourceIndexMap[ResourceType.Housing].amount
+        );
+        //Debug.Log($"We now have a population of {resourceIndexMap[ResourceType.Food].amount} " +
+        //    $"based on {resourceIndexMap[ResourceType.Population].amount} food.");
+
+            //ResourceEntry entry = newResource.GetComponent<ResourceEntry>();
+            ////entry.resourceInfo = resourceEntries[resource].name;
+            //Resource res = resourceIndexMap[allResourceTypes[resource]];
+            //entry.resourceInfo = $"{res.amount} (+{res.change})";
+    }
+
+    public void UpdateResourceUI()
+    {
+        foreach (Resource resource in resources)
+        {
+            //resource.amount += resource.change;
+
+            // Update UI entries. First we grab the appropriate UI element
+            ResourceEntry entry = resourceToUIMap[resource.resourceType];
+            // Then we set its text
+            //Debug.Log($"Updating resource type {resource.resourceType}");
+            entry.resourceInfo = $"{resource.amount} (+{resource.change})";
+            entry.Refresh();
+        }
     }
 
     /// <summary>

@@ -391,7 +391,7 @@ public class WorldGenerator : MonoBehaviour
         HexCell newCell = CreateCell(newTile, x, z);
 
         // Delete old
-        GameObject.Destroy(cellToReplace.gameObject);
+        //GameObject.Destroy(cellToReplace.gameObject);
         
         // Update resources
         GameObject.Find("Game Manager").GetComponent<ResourceManager>().UpdateTile(cellToReplace.tileType, newCell.tileType);
@@ -400,5 +400,50 @@ public class WorldGenerator : MonoBehaviour
         allCells[x, z] = newCell;
         allTiles[x, z] = newTile;
 
+        this.StartCoroutine(SwapTiles(cellToReplace, newCell, 0.5f));
+    }
+
+    public IEnumerator SwapTiles(HexCell oldCell, HexCell newCell, float time) 
+    {
+        GameObject newImprovement = newCell.improvement;
+        //if (newImprovement != null)
+        //{
+        //    newImprovement.SetActive(false);
+        //}
+
+
+        GameObject oldImprovement = oldCell.improvement;
+        if (oldImprovement != null)
+        {
+            Vector3 targetPosition = oldImprovement.transform.position;
+
+            // Take 5 seconds
+            float squishDuration = time;
+            float currentTime = 0f;
+            while (currentTime < squishDuration)
+            {
+                float t = currentTime / squishDuration;
+
+                float scaleDownT = Mathf.Max(0, (t - 0.5f) * 2.0f);
+
+                // Scale down the existing
+                Vector3 newScale = Vector3.Lerp(Vector3.one, new Vector3(1f, 0.1f, 1f), scaleDownT);
+                oldImprovement.transform.localScale = newScale;
+
+                float tSmooth = t * t * (3f - 2f * t);
+                Vector3 newOffset = Vector3.Lerp(new Vector3(0, 10f, 0), new Vector3(0, 0, 0), tSmooth);
+                newImprovement.transform.position = targetPosition + newOffset;
+
+                currentTime += Time.deltaTime;
+                yield return null;
+            }
+            oldImprovement.transform.localScale = new Vector3(1f, 0.1f, 1f);
+            GameObject.Destroy(oldImprovement);
+        }
+
+        //if (newImprovement != null)
+        //{
+        //    newImprovement.SetActive(true);
+        //}
     }
 }

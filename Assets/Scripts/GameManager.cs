@@ -11,6 +11,12 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     public ResourceManager resourceManager;
 
+    [SerializeField]
+    public UIManager uiManager;
+
+    [SerializeField]
+    public ErrorManager errorManager;
+
     public static TileType[,] allTiles;
     public static HexCell[,] allCells;
 

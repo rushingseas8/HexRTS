@@ -73,7 +73,7 @@ public sealed class TileType
         MeshType.Flat,
         MaterialType.Grass,
         ImprovementType.LumberCamp,
-        "LumberCamp",
+        "Lumber Camp",
         producesPerTurn: new Dictionary<ResourceManager.ResourceType, int>() {
             { ResourceManager.ResourceType.Wood, 3 }
         },
@@ -91,7 +91,7 @@ public sealed class TileType
         ImprovementType.Mill,
         "Mill",
         producesPerTurn: new Dictionary<ResourceManager.ResourceType, int>() {
-            { ResourceManager.ResourceType.Food, 1 }
+            { ResourceManager.ResourceType.Food, 2 }
         },
         costsOnce: new Dictionary<ResourceManager.ResourceType, int>() {
             { ResourceManager.ResourceType.Wood, 3 }
@@ -128,6 +128,49 @@ public sealed class TileType
         Forest,
         LumberCamp,
         House
+    };
+
+    // Mapping of tiles to the list of possible improvements that can be built there.
+    public static readonly Dictionary<TileType, List<TileType>> CanPlace = new Dictionary<TileType, List<TileType>>()
+    {
+        {
+            Grass,
+            new List<TileType>()
+            {
+                House,
+                Mill
+            }
+        },
+        {
+            Forest,
+            new List<TileType>()
+            {
+                LumberCamp
+            }
+        },
+        {
+            House,
+            new List<TileType>()
+            {
+                Grass,
+                Mill
+            }
+        },
+        {
+            Mill,
+            new List<TileType>()
+            {
+                Grass,
+                House
+            }
+        },
+        {
+            LumberCamp,
+            new List<TileType>()
+            {
+                Grass
+            }
+        }
     };
 
     public MeshType _mesh;

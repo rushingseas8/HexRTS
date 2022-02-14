@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CameraController : MonoBehaviour
 {
@@ -11,8 +12,8 @@ public class CameraController : MonoBehaviour
     public Camera controlledCamera;
 
     // How much of a border around the edge is a trigger for camera movement
-    public const float HorizontalScrollBorder = 0.15f;
-    public const float VerticalScrollBorder = 0.10f;
+    public const float HorizontalScrollBorder = 0.03f;
+    public const float VerticalScrollBorder = 0.02f;
 
     // Adjusts how fast the camera zooms
     public const float ZoomScaleFactor = 5.0f;
@@ -31,9 +32,15 @@ public class CameraController : MonoBehaviour
     public static readonly Vector3 CameraOffsetVector = new Vector3(0, 7.5f, -10f);
 
     [SerializeField]
-    public GameObject mouseCursor;
-
+    public GameObject hoverCursor;
+    
+    [SerializeField]
+    public GameObject targetCursor;
+    
     // Which cell is currently being hovered over, if any.
+    public HexCell targetedCell;
+
+    // Which cell is currently being clicked on, if any.
     public HexCell selectedCell;
 
     // Start is called before the first frame update
@@ -141,6 +148,24 @@ public class CameraController : MonoBehaviour
         //    }
         //}
 
+        // Checks if we're hovering over the UI; if so, stop updating the raycast selection.
+        //if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
+        //GameObject hoveringGO = UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject;
+        //if (hoveringGO != null)
+        //{
+        //    Debug.Log($"Pointing over game object: {hoveringGO}");
+        //    return;
+        //}
+        
+        GameManager man = GameObject.Find("Game Manager").GetComponent<GameManager>();
+        bool hitUI = man.uiManager.HasUI();
+        if (hitUI)
+        {
+            Debug.Log("Hit some UI, ignoring.");
+            return;
+        }
+
+
         // Ray from mouse position in 3d space in the direction camera is looking
         Ray ray = controlledCamera.ScreenPointToRay(Input.mousePosition);
         
@@ -153,64 +178,100 @@ public class CameraController : MonoBehaviour
             {
                 //Debug.Log($"Hit object: {hitCell}");
                 // Move the cursor (slightly above) the terrain object hit
-                mouseCursor.transform.position = hitObject.transform.position + new Vector3(0, 0.01f, 0);
-                selectedCell = hitCell;
+                hoverCursor.transform.position = hitObject.transform.position + new Vector3(0, 0.01f, 0);
+                this.targetedCell = hitCell;
             }
         }
-        if (selectedCell != null)
+        if (this.targetedCell != null)
         {
-            OffsetCoord hitCoord = selectedCell.coord.ToOffsetCoord();
             GameManager manager = GameObject.Find("Game Manager").GetComponent<GameManager>();
             if (Input.GetMouseButtonDown(0))
             {
-                if (selectedCell.tileType == TileType.Grass)
+                if (this.selectedCell != null)
                 {
-                    //Debug.Log("Replacing with lumber camp");
-                    if (!manager.resourceManager.CanAffordTile(TileType.House))
-                    {
-                        Debug.Log("Can't afford to place a house down.");
-                    }
-                    else
-                    {
-                        manager.worldGenerator.ReplaceTile(
-                            GameManager.allCells, 
-                            GameManager.allTiles, 
-                            hitCoord.x,
-                            hitCoord.y,
-                            TileType.House);
-                    }
-
+                    manager.uiManager.DeleteSelectionPanel();
                 }
-                
-                if (selectedCell.tileType == TileType.Forest)
+
+                this.selectedCell = this.targetedCell;
+                targetCursor.transform.position = hoverCursor.transform.position;
+                targetCursor.SetActive(true);
+
+                // Not defined? That's okay- assume nothing can be built for now
+                if (!TileType.CanPlace.ContainsKey(this.selectedCell.tileType))
                 {
-                    if (!manager.resourceManager.CanAffordTile(TileType.House))
-                    {
-                        Debug.Log("Can't afford to place a lumber camp down.");
-                    }
-                    else
-                    {
-                        manager.worldGenerator.ReplaceTile(
-                            GameManager.allCells, 
-                            GameManager.allTiles, 
-                            hitCoord.x,
-                            hitCoord.y,
-                            TileType.LumberCamp);
-
-                    }
-                    //Debug.Log("Replacing with lumber camp");
+                    Debug.LogWarning($"Failed to lookup {this.selectedCell.tileType} in TileType.CanPlace");
                 }
-            } else if (Input.GetMouseButtonUp(0))
-            {
-                //Debug.Log("Replacing with forest");
-                //manager.worldGenerator.ReplaceTile(
-                //    GameManager.allCells, 
-                //    GameManager.allTiles, 
-                //    hitCoord.x,
-                //    hitCoord.y,
-                //    TileType.Forest);
+                else
+                {
+                    // Otherwise, look up what TileTypes this TileType can transform into
+                    List<TileType> placeableTiles = TileType.CanPlace[this.selectedCell.tileType];
+                    manager.uiManager.NewSelectionPanel(this.selectedCell.coord.ToOffsetCoord(), placeableTiles);
+                }
 
             }
+
+            if (Input.GetMouseButtonDown(1))
+            {
+                if (this.selectedCell != null)
+                {
+                    manager.uiManager.DeleteSelectionPanel();
+                    targetCursor.SetActive(false);
+                    this.selectedCell = null;
+                }
+            }
+
+
+            //OffsetCoord hitCoord = selectedCell.coord.ToOffsetCoord();
+            //if (Input.GetMouseButtonDown(0))
+            //{
+            //    if (selectedCell.tileType == TileType.Grass)
+            //    {
+            //        //Debug.Log("Replacing with lumber camp");
+            //        if (!manager.resourceManager.CanAffordTile(TileType.House))
+            //        {
+            //            Debug.Log("Can't afford to place a house down.");
+            //        }
+            //        else
+            //        {
+            //            manager.worldGenerator.ReplaceTile(
+            //                GameManager.allCells, 
+            //                GameManager.allTiles, 
+            //                hitCoord.x,
+            //                hitCoord.y,
+            //                TileType.House);
+            //        }
+
+            //    }
+                
+            //    if (selectedCell.tileType == TileType.Forest)
+            //    {
+            //        if (!manager.resourceManager.CanAffordTile(TileType.House))
+            //        {
+            //            Debug.Log("Can't afford to place a lumber camp down.");
+            //        }
+            //        else
+            //        {
+            //            manager.worldGenerator.ReplaceTile(
+            //                GameManager.allCells, 
+            //                GameManager.allTiles, 
+            //                hitCoord.x,
+            //                hitCoord.y,
+            //                TileType.LumberCamp);
+
+            //        }
+            //        //Debug.Log("Replacing with lumber camp");
+            //    }
+            //} else if (Input.GetMouseButtonUp(0))
+            //{
+            //    //Debug.Log("Replacing with forest");
+            //    //manager.worldGenerator.ReplaceTile(
+            //    //    GameManager.allCells, 
+            //    //    GameManager.allTiles, 
+            //    //    hitCoord.x,
+            //    //    hitCoord.y,
+            //    //    TileType.Forest);
+
+            //}
 
         }
         

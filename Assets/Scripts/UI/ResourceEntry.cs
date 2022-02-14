@@ -1,19 +1,22 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class ResourceEntry : MonoBehaviour
 {
     public Image resourceImage;
-    public Text resourceText;
+    public TextMeshProUGUI resourceText;
 
     [SerializeField]
-    public string resourceName;
+    public string resourceInfo;
 
     [SerializeField]
     public Sprite resourceSprite;
 
+    [SerializeField]
+    public TooltipHover hover;
 
     // Start is called before the first frame update
     void Start()
@@ -29,7 +32,7 @@ public class ResourceEntry : MonoBehaviour
 
     public void Refresh()
     {
-        resourceText.text = resourceName;
+        resourceText.text = resourceInfo;
         resourceImage.sprite = resourceSprite;
     }
 }

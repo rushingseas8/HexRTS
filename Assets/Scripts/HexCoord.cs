@@ -19,6 +19,10 @@ public class HexCoord
     private readonly Vector3 POS_R = new Vector3(-0.5f * HEIGHT, 0, -0.25f * WIDTH);
     private readonly Vector3 POS_S = new Vector3(0.5f * HEIGHT, 0, -0.25f * WIDTH);
 
+    //private readonly Vector3 POS_Q = new Vector3(-WIDTH, 0, 0);
+    //private readonly Vector3 POS_R = new Vector3(-0.25f * WIDTH, 0, -0.5f * HEIGHT);
+    //private readonly Vector3 POS_S = new Vector3(-0.25f * WIDTH, 0, 0.5f * HEIGHT);
+
     public HexCoord(int q, int r, int s)
     {
         this.q = q;
@@ -38,11 +42,16 @@ public class HexCoord
         return q * POS_Q + r * POS_R + s * POS_S;
     }
 
+    public Vector3 ToWorldCentered()
+    {
+        return ToWorld() + new Vector3(HEIGHT / 4.0f, 0, WIDTH / 4.0f);
+    }
+
     public OffsetCoord ToOffsetCoord()
     {
         int x = q;
         int y = r + (q + (q & 1)) / 2;
-        return new OffsetCoord(x, y);
+        return new OffsetCoord(y, x);
     }
 
     public override string ToString()
