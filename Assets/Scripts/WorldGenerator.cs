@@ -194,6 +194,24 @@ public class WorldGenerator : MonoBehaviour
         return ourTile;
     }
 
+    public TileType MakeOceans(TileType[,] tiles, int x, int z)
+    {
+        TileType ourTile = tiles[x, z];
+        if (ourTile._material == TileType.MaterialType.Water)
+        {
+            float noiseValue = noiseGenerator.GetValueNormalized(x, z);
+            //if (noiseValue < 0.525f)
+            //{
+            //    return TileType.ShallowWater;
+            //}
+            if (noiseValue > 0.575f)
+            {
+                return TileType.DeepWater;
+            }
+        }
+        return ourTile;
+    }
+
     public TileType MakeMountains(TileType[,] tiles, int x, int z)
     {
         TileType ourTile = tiles[x, z];
@@ -202,6 +220,10 @@ public class WorldGenerator : MonoBehaviour
             int rand = Random.Range(0, 100);
 
             float noiseValue = noiseGenerator.GetValueNormalized(x, z);
+            if (noiseValue < 0.5f && rand < 5)
+            {
+                return TileType.Stone;
+            }
             if (noiseValue < 0.4f && rand < 75)
             {
                 return TileType.Mountain;
@@ -242,24 +264,42 @@ public class WorldGenerator : MonoBehaviour
         TileType[,] tiles = lastTiles.Clone() as TileType[,];
 
         // Create a list of all the transformations we want to apply, in order
-        WorldGenTransform[] worldGenStages = new WorldGenTransform[]
+        //WorldGenTransform[] worldGenStages = new WorldGenTransform[]
+        //{
+        //    new WorldGenTransform(BasicGeneration),
+        //    new WorldGenTransform(MakeBeaches),
+        //    new WorldGenTransform(MakeMountains),
+        //    new WorldGenTransform(MakeForests),
+        //    new WorldGenTransform(MakeOceans),
+        //    //new WorldGenTransform(MakeEdge), // Not sure how I feel about this as a fog of war.
+        //};
+
+        // Create a list of all the transformations we want to apply, in order
+        WorldGenBase[] worldGenStages = new WorldGenBase[]
         {
-            new WorldGenTransform(BasicGeneration),
-            new WorldGenTransform(MakeBeaches),
-            new WorldGenTransform(MakeMountains),
-            new WorldGenTransform(MakeForests),
-            //new WorldGenTransform(MakeEdge), // Not sure how I feel about this as a fog of war.
+            new WorldGenOceans(),
+            new WorldGenBeaches(),
+            new WorldGenMountains(),
+            // new WorldGenForests(),
+            new WorldGenZoom(),
+            new WorldGenZoom(),
+            new WorldGenBeaches(),
+            // new WorldGenTest(),
+            // new WorldGenZoom(),
+            // new WorldGenZoom(),
         };
 
         // Iterate through each transform
-        foreach (WorldGenTransform transform in worldGenStages)
+        foreach (WorldGenBase transform in worldGenStages)
+        //foreach (WorldGenTransform transform in worldGenStages)
         {
             // And apply it to each tile
             for (int i = 0; i < width; i++)
             {
                 for (int j = 0; j < height; j++)
                 {
-                    tiles[i, j] = transform(lastTiles, i, j);
+                    tiles[i, j] = transform.Generate(lastTiles, this.noiseGenerator, i, j);
+                    //tiles[i, j] = transform(lastTiles, i, j);
                 }
             }
 
@@ -349,11 +389,15 @@ public class WorldGenerator : MonoBehaviour
                 
         // Some height generation.
         float heightOffset = 0;
-        if (newTile != TileType.Water)
+
+        heightOffset = -6 * (noiseGenerator.GetValueNormalized(x, z) - 0.5f);
+        heightOffset = (int)(heightOffset * 4) / 4.0f;
+        heightOffset += 0.25f;
+        
+        if (newTile == TileType.Water || newTile == TileType.ShallowWater || newTile == TileType.DeepWater)
         {
-            heightOffset = -6 * (noiseGenerator.GetValueNormalized(x, z) - 0.5f);
-            heightOffset = (int)(heightOffset * 4) / 4.0f;
-            heightOffset += 0.25f;
+            //heightOffset -= 0.5f;
+            heightOffset = 0;
         }
 
         // Add the hex coord to the world, add some height offset

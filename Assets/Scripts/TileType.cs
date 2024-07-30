@@ -9,7 +9,8 @@ public sealed class TileType
 {
     public enum MeshType
     {
-        Flat
+        Flat,
+        Lowered
     }
 
     public enum MaterialType
@@ -19,7 +20,9 @@ public sealed class TileType
         Grass,
         Water,
         Sand,
-        Mountain
+        Mountain,
+        WaterShallow,
+        WaterDeep
     }
 
     public enum ImprovementType
@@ -30,7 +33,9 @@ public sealed class TileType
         LumberCamp,
         Mill,
         House,
-        Mountain
+        Mountain,
+        Stone,
+        Quarry
     }
 
     public static readonly TileType Empty = new TileType(
@@ -78,10 +83,10 @@ public sealed class TileType
             { ResourceManager.ResourceType.Wood, 3 }
         },
         costsOnce: new Dictionary<ResourceManager.ResourceType, int>() {
-            { ResourceManager.ResourceType.Population, 1 },
+            { ResourceManager.ResourceType.FreePopulation, -1 },
         },
         refundsOnce: new Dictionary<ResourceManager.ResourceType, int>() {
-            { ResourceManager.ResourceType.Population, 1 },
+            { ResourceManager.ResourceType.FreePopulation, 1 },
         }
     );
 
@@ -119,6 +124,30 @@ public sealed class TileType
         ImprovementType.Mountain, 
         "Mountain");
 
+    public static readonly TileType Stone = new TileType(
+        MeshType.Lowered,
+        MaterialType.Grass,
+        ImprovementType.Stone, 
+        "Stone");
+
+    public static readonly TileType Quarry = new TileType(
+        MeshType.Lowered,
+        MaterialType.Grass,
+        ImprovementType.Quarry, 
+        "Quarry");
+    
+    public static readonly TileType ShallowWater = new TileType(
+        MeshType.Flat,
+        MaterialType.WaterShallow,
+        ImprovementType.Empty,
+        "ShallowWater");
+    
+    public static readonly TileType DeepWater = new TileType(
+        MeshType.Flat,
+        MaterialType.WaterDeep,
+        ImprovementType.Empty,
+        "DeepWater");
+
     public static readonly TileType[] AllTiles = new TileType[]
     {
         Empty,
@@ -127,7 +156,12 @@ public sealed class TileType
         Sand,
         Forest,
         LumberCamp,
-        House
+        House,
+        Mountain,
+        Stone,
+        Quarry,
+        ShallowWater,
+        DeepWater
     };
 
     // Mapping of tiles to the list of possible improvements that can be built there.
@@ -169,6 +203,24 @@ public sealed class TileType
             new List<TileType>()
             {
                 Grass
+            }
+        },
+        {
+            Stone,
+            new List<TileType>()
+            {
+                Quarry
+            }
+        }
+    };
+
+    public static readonly Dictionary<TileType, List<List<TileType>>> Rules = new Dictionary<TileType, List<List<TileType>>>()
+    {
+        {
+            House,
+            new List<List<TileType>>()
+            {
+                new List<TileType>() { Mill, Mill }
             }
         }
     };

@@ -47,7 +47,7 @@ public class CameraController : MonoBehaviour
     void Start()
     {
         // Init camera
-        controlledCamera.transform.position = new Vector3(0, 7.5f, 0);
+        //controlledCamera.transform.position = new Vector3(0, 7.5f, 0);
         controlledCamera.transform.rotation = Quaternion.AngleAxis(45, Vector3.right);
     }
 

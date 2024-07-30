@@ -55,7 +55,24 @@ public class SelectionPanel : MonoBehaviour
         Debug.Log($"ConfigureButton called with tile={tile}");
         //Button button = buttons[0].GetComponent<Button>();
         button.onClick.AddListener(() => HandleSelection(tile));
-        button.GetComponentInChildren<TextMeshProUGUI>().text = tile.ToString();
+        TextMeshProUGUI textMeshPro = button.GetComponentInChildren<TextMeshProUGUI>();
+        textMeshPro.text = tile.ToString();
+        TooltipHover hover = textMeshPro.gameObject.AddComponent<TooltipHover>();
+
+        string hoverText = "Costs:";
+        for (int i = 0; i < ResourceManager.allResourceTypes.Length; i++) {
+            if (tile.costsOnce[i] != 0)
+            {
+                hoverText += $"\n{tile.costsOnce[i]} {ResourceManager.allResourceTypes[i]}";
+            }
+        }
+        // No resource costs?
+        if (hoverText.Equals("Costs:"))
+        {
+            hoverText = "Free to place!";
+        }
+
+        hover.hoverText = hoverText;
     }
 
     public void HandleSelection(TileType tile)

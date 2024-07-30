@@ -8,6 +8,7 @@ public class ResourceEntry : MonoBehaviour
 {
     public Image resourceImage;
     public TextMeshProUGUI resourceText;
+    public Color color = Color.black;
 
     [SerializeField]
     public string resourceInfo;
@@ -33,6 +34,8 @@ public class ResourceEntry : MonoBehaviour
     public void Refresh()
     {
         resourceText.text = resourceInfo;
+        resourceText.color = color;
+        resourceText.alpha = 1;
         resourceImage.sprite = resourceSprite;
     }
 }

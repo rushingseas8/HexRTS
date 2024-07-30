@@ -24,6 +24,7 @@ public class ResourceManager : MonoBehaviour
     // Handles all types of resources
     public enum ResourceType
     {
+        FreePopulation, // Fake resource; represented in a combined form w/ population
         Population,
         Housing,
         Food,
@@ -54,6 +55,7 @@ public class ResourceManager : MonoBehaviour
 
     public static ResourceType[] allResourceTypes = new ResourceType[]
     {
+        ResourceType.FreePopulation,
         ResourceType.Population,
         ResourceType.Housing,
         ResourceType.Food,
@@ -81,8 +83,8 @@ public class ResourceManager : MonoBehaviour
         }
 
         // Initialize resource amounts
-        resources[1].amount = 3;
-        resources[3].amount = 10;
+        resources[2].amount = 3;
+        resources[4].amount = 10;
     }
 
     // in-game resource
@@ -105,24 +107,29 @@ public class ResourceManager : MonoBehaviour
     {
         // TODO UI stuff (stinky)
         resourceGameObjects = new ResourceEntry[allResourceTypes.Length];
-        for (int resource = 0; resource < allResourceTypes.Length; resource++)
+        // Note we skip over index 0, FreePopulation
+        for (int i = 1; i < allResourceTypes.Length; i++)
         {
+            int resource = i - 1; // Skip over FreePopulation, shift to compensate
+
             GameObject newResource = GameObject.Instantiate(resourceEntry);
             //resourceGameObjects[resource] = newResource;
             newResource.transform.SetParent(resourceBar.transform, worldPositionStays: false);
 
             ResourceEntry entry = newResource.GetComponent<ResourceEntry>();
             resourceGameObjects[resource] = entry;
-            resourceToUIMap.Add(allResourceTypes[resource], entry);
+            resourceToUIMap.Add(allResourceTypes[i], entry);
 
             //entry.resourceInfo = resourceEntries[resource].name;
-            Resource res = resourceIndexMap[allResourceTypes[resource]];
-            entry.resourceInfo = $"{res.amount} (+{res.change})";
+            //Resource res = resourceIndexMap[allResourceTypes[resource]];
             entry.resourceSprite = resourceEntries[resource].image;
             entry.hover.hoverText = resourceEntries[resource].hoverText;
 
             entry.Refresh();
         }
+
+        // Update the text on the UI
+        UpdateResourceUI();
     }
 
     // Update is called once per frame
@@ -171,6 +178,16 @@ public class ResourceManager : MonoBehaviour
     /// <returns></returns>
     public ResourceType? CanAffordTile(TileType newTile)
     {
+        // Costs FreePopulation
+        if (newTile.costsOnce[0] != 0)
+        {
+            // If this would put the FreePopulation over Population, that's a no
+            if (resources[0].amount - newTile.costsOnce[0] > resources[1].amount)
+            {
+                return resources[0].resourceType;
+            }
+        }
+
         for (int i = 0; i < resources.Length; i++)
         {
             if (resources[i].amount - newTile.costsOnce[i] < 0)
@@ -268,13 +285,58 @@ public class ResourceManager : MonoBehaviour
     {
         foreach (Resource resource in resources)
         {
+            // Don't update for FreePopulation, since it's a fake entry
+            if (resource.resourceType == ResourceType.FreePopulation)
+            {
+                continue;
+            }
+
             //resource.amount += resource.change;
 
             // Update UI entries. First we grab the appropriate UI element
             ResourceEntry entry = resourceToUIMap[resource.resourceType];
+            if (resource.resourceType == ResourceType.Population)
+            {
+                // Represent population as "FreePop / Population"
+                int freePop = resourceIndexMap[allResourceTypes[0]].amount;
+                int pop = resource.amount;
+                entry.resourceInfo = $"{freePop} / {pop}";
+                if (freePop >= pop)
+                {
+                    // TODO constants?
+                    entry.color = Color.red;
+                    entry.hover.hoverText = "Population.\nOne population required per building.\n<color=\"red\">Need more houses!</color>";
+                }
+                else
+                {
+                    entry.color = Color.black;
+                    entry.hover.hoverText = "Population.\nOne population required per building.";
+                }
+            }
+            else if (resource.resourceType == ResourceType.Housing)
+            {
+                // Housing doesn't have a per-turn increase
+                entry.resourceInfo = $"{resource.amount}";
+            }
+            else
+            {
+                // Represent all other resources as "amount (+change)"
+                if (resource.change < 0)
+                {
+                    // .. or "amount (-change)" if negative
+                    entry.resourceInfo = $"{resource.amount} ({resource.change})";
+                }
+                else
+                {
+                    entry.resourceInfo = $"{resource.amount} (+{resource.change})";
+                }
+            }
+
+
             // Then we set its text
             //Debug.Log($"Updating resource type {resource.resourceType}");
-            entry.resourceInfo = $"{resource.amount} (+{resource.change})";
+            //entry.resourceInfo = $"{resource.amount} (+{resource.change})";
+            // Finally, refresh the UI so it updates
             entry.Refresh();
         }
     }

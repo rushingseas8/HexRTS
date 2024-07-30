@@ -17,6 +17,12 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     public ErrorManager errorManager;
 
+    [SerializeField]
+    public CameraController cameraController;
+
+    [SerializeField]
+    public Material waterMaterial;
+
     public static TileType[,] allTiles;
     public static HexCell[,] allCells;
 
@@ -69,7 +75,31 @@ public class GameManager : MonoBehaviour
         allCells = worldGenerator.CreateGameObjects(allTiles);
 
         resourceManager.InitializeChanges(allTiles);
+
+        cameraController.lookatPoint = new Vector3(
+            1.7f * -worldGenerator.height / 2.0f, 
+            0, 
+            1.5f * -worldGenerator.width / 2.0f
+        );
+        Debug.Log($"pos: {cameraController.controlledCamera.transform.position}");
         
+        // Generate the noise map from the worldgen and pass it into the water shader
+        int w = worldGenerator.width;
+        int h = worldGenerator.height;
+        Texture2D heightNoiseMap = new Texture2D(w, h, TextureFormat.R8, mipChain: false);
+        //heightNoiseMap.SetPixels
+        Color[] colors = new Color[w * h];
+        for (int i = 0; i < worldGenerator.width; i++)
+        {
+            for (int j = 0; j < worldGenerator.height; j++)
+            {
+                float noiseVal = worldGenerator.noiseGenerator.GetValueNormalized(i, j);
+                colors[(i * w) + j] = new Color(noiseVal, noiseVal, noiseVal);
+            }
+        }
+        heightNoiseMap.SetPixels(colors);
+        heightNoiseMap.Apply();
+        this.waterMaterial.SetTexture("_HeightNoiseMap", heightNoiseMap);
     }
 
     // Update is called once per frame
