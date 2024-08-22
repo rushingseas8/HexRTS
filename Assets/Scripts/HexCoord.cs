@@ -23,6 +23,16 @@ public class HexCoord
     //private readonly Vector3 POS_R = new Vector3(-0.25f * WIDTH, 0, -0.5f * HEIGHT);
     //private readonly Vector3 POS_S = new Vector3(-0.25f * WIDTH, 0, 0.5f * HEIGHT);
 
+    public static readonly Vector3Int[] DirectionVectors = new Vector3Int[6]
+    {
+        new Vector3Int(1, 0, -1),
+        new Vector3Int(1, -1, 0),
+        new Vector3Int(0, -1, 1),
+        new Vector3Int(-1, 0, 1),
+        new Vector3Int(-1, 1, 0),
+        new Vector3Int(0, 1, -1),
+    };
+
     public HexCoord(int q, int r, int s)
     {
         this.q = q;
@@ -52,6 +62,24 @@ public class HexCoord
         int x = q;
         int y = r + (q + (q & 1)) / 2;
         return new OffsetCoord(y, x);
+        //int x = q + (r + (r & 1)) / 2;
+        //int y = r;
+        //return new OffsetCoord(x, y);
+    }
+
+    public HexCoord Neighbor(int direction)
+    {
+        return this + new HexCoord(DirectionVectors[direction]);
+    }
+
+    public static HexCoord operator +(HexCoord self, HexCoord other)
+    {
+        return new HexCoord(self.q + other.q, self.r + other.r, self.s + other.s);
+    }
+
+    public static HexCoord operator *(HexCoord self, int factor)
+    {
+        return new HexCoord(self.q * factor, self.r * factor, self.s * factor);
     }
 
     public override string ToString()

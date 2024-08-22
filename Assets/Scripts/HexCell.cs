@@ -16,4 +16,18 @@ public class HexCell : MonoBehaviour
 
     [SerializeField]
     public GameObject improvement;
+
+    public bool isActive = true;
+
+    public void SetActive(bool visible)
+    {
+        tile.SetActive(visible);
+        if (improvement != null ) {
+            improvement.SetActive(visible);
+        }
+
+        // Update our internal flag
+        isActive = visible;
+    }
+
 }

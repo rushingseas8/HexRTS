@@ -12,6 +12,9 @@ public class GameManager : MonoBehaviour
     public ResourceManager resourceManager;
 
     [SerializeField]
+    public FogOfWarManager fogOfWarManager;
+
+    [SerializeField]
     public UIManager uiManager;
 
     [SerializeField]
@@ -100,6 +103,9 @@ public class GameManager : MonoBehaviour
         heightNoiseMap.SetPixels(colors);
         heightNoiseMap.Apply();
         this.waterMaterial.SetTexture("_HeightNoiseMap", heightNoiseMap);
+
+        this.fogOfWarManager.Generate();
+
     }
 
     // Update is called once per frame

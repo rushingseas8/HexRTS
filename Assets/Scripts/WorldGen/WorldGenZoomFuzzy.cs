@@ -5,7 +5,7 @@ using UnityEngine;
 // Based on GenLayerZoom from minecraft, but has weird artifacts.
 // maybe because MC is infinite but this is pulling from finite data?
 // ..maybe because it's going along the x/z axis for zoom rather than 3 hex axes.
-public class WorldGenZoom : WorldGenBase
+public class WorldGenZoomFuzzy : WorldGenBase
 {
     public override TileType Generate(TileType[,] tiles, PerlinGenerator noiseGen, int x, int z)
     {
@@ -50,7 +50,7 @@ public class WorldGenZoom : WorldGenBase
             {
                 // x and z are both odd
                 TileType baseTileP1X1Z = tiles[i + 1, j + 1];
-                return WeirdFuzzer(baseTile, baseTileP1X, baseTileP1Z, baseTileP1X1Z);
+                return WeirdFuzzerFuzzy(baseTile, baseTileP1X, baseTileP1Z, baseTileP1X1Z);
             }
         }
 
@@ -65,37 +65,6 @@ public class WorldGenZoom : WorldGenBase
 
         ////tiles[i,j] = tile;
         //return tile;
-    }
-
-    private TileType WeirdFuzzer(TileType p1, TileType p2, TileType p3, TileType p4) {
-        if (p2 == p3 && p3 == p4) {
-            return p2;
-        } else if (p1 == p2 && p1 == p3) {
-            return p1;
-        } else if (p1 == p2 && p1 == p4) {
-            return p1;
-        } else if (p1 == p3 && p1 == p4) {
-            return p1;
-        } else if (p1 == p2 && p3 != p4) {
-            return p1;
-        } else if (p1 == p3 && p2 != p4) {
-            return p1;
-        } else if (p1 == p4 && p2 != p3) {
-            return p1;
-        } else if (p2 == p3 && p1 != p4) {
-            return p2;
-        } else if (p2 == p4 && p1 != p3) {
-            return p2;
-        } else if (p3 == p4 && p1 != p2) {
-            return p3;
-        } else {
-            int choice = Random.Range(0, 4);
-            return new TileType[]{ p1, p2, p3, p4 }[choice];
-        }
-        // } else {
-        //     int choice = Random.Range(0, 4);
-        //     return p3 == p4 && p1 != p2 ? p3 : new TileType[]{ p1, p2, p3, p4 }[choice];
-        // }
     }
 
     private TileType WeirdFuzzerFuzzy(TileType p1, TileType p2, TileType p3, TileType p4) {

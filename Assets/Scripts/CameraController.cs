@@ -176,7 +176,7 @@ public class CameraController : MonoBehaviour
             
             if (hitCell != null)
             {
-                //Debug.Log($"Hit object: {hitCell}");
+                Debug.Log($"Hit object: {hitCell} at Hex: {hitCell.coord} Offset: {hitCell.coord.ToOffsetCoord()}");
                 // Move the cursor (slightly above) the terrain object hit
                 hoverCursor.transform.position = hitObject.transform.position + new Vector3(0, 0.01f, 0);
                 this.targetedCell = hitCell;

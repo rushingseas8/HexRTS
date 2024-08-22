@@ -1311,6 +1311,8 @@ GameObject:
   - component: {fileID: 793001821}
   - component: {fileID: 793001822}
   - component: {fileID: 793001823}
+  - component: {fileID: 793001824}
+  - component: {fileID: 793001825}
   m_Layer: 0
   m_Name: Game Manager
   m_TagString: Untagged
@@ -1332,6 +1334,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   worldGenerator: {fileID: 793001819}
   resourceManager: {fileID: 793001821}
+  fogOfWarManager: {fileID: 793001824}
   uiManager: {fileID: 793001822}
   errorManager: {fileID: 793001823}
   cameraController: {fileID: 793001820}
@@ -1393,6 +1396,7 @@ MonoBehaviour:
     persistence: 0.5
     xOffset: 0.1
     zOffset: 646
+  randomSeed: 1337
   width: 50
   height: 50
 --- !u!114 &793001820
@@ -1479,6 +1483,30 @@ MonoBehaviour:
     type: 3}
   errorTextMesh: {fileID: 5438854358093959842, guid: ebc159e3133d118498f0dce041e9fd33,
     type: 3}
+--- !u!114 &793001824
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 793001816}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ecd8e226b89fb2444826647fa06d428f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &793001825
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 793001816}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ced86800120dac4a8a8d3a44f9c9da4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &852883071
 GameObject:
   m_ObjectHideFlags: 0

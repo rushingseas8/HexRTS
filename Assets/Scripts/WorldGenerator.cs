@@ -32,6 +32,9 @@ public class WorldGenerator : MonoBehaviour
 
     [SerializeField]
     public PerlinGenerator noiseGenerator;
+
+    [SerializeField]
+    public int randomSeed = 1337;
     
     [SerializeField]
     [Range(1, 150)]
@@ -56,182 +59,7 @@ public class WorldGenerator : MonoBehaviour
     /// <param name="z">Z coord into the world</param>
     /// <returns></returns>
     public delegate TileType WorldGenTransform(TileType[,] tiles, int x, int z);
-
-    public TileType BasicGeneration(TileType[,] tiles, int x, int z)
-    {
-        float noise = noiseGenerator.GetValueNormalized(x, z);
-                
-        TileType tile = TileType.Water;
-        if (noise < 0.5f)
-        {
-            tile = TileType.Grass;
-        }
-
-        //tiles[i,j] = tile;
-        return tile;
-    }
-
-    public TileType GetOrEmpty(TileType[,] tiles, int x, int z)
-    {
-        if (x < 0 || x >= tiles.GetLength(0))
-        {
-            return TileType.Empty;
-        }
-        
-        if (z < 0 || z >= tiles.GetLength(1))
-        {
-            return TileType.Empty;
-        }
-
-        return tiles[x,z];
-    }
-
-    public static readonly int[,,] EVENQ_OFFSETS =
-    {
-        // Even columns
-        {
-            { 1, 1 },
-            { 1, 0 },
-            { 0, -1 },
-            { -1, 0 },
-            { -1, 1 },
-            { 0, 1 },
-        },
-        // Odd columns
-        {
-            { 1, 0 },
-            { 1, -1 },
-            { 0, -1 },
-            { -1, -1 },
-            { -1, 0 },
-            { 0, 1 },
-        }
-    };
-
-    /// <summary>
-    /// Returns the neighbor of a tile in a given direction.
-    /// </summary>
-    /// <param name="tiles"></param>
-    /// <param name="x"></param>
-    /// <param name="z"></param>
-    /// <param name="direction"></param>
-    /// <returns></returns>
-    public TileType GetNeighbor(TileType[,] tiles, int x, int z, int direction)
-    {
-        int parity = x & 1;
-        return GetOrEmpty(
-            tiles, 
-            x + EVENQ_OFFSETS[parity, direction, 0], 
-            z + EVENQ_OFFSETS[parity, direction, 1]
-        );
-    }
-
-    /// <summary>
-    /// Returns all 6 neighbors of the given tile. If the index is OOB,
-    /// returns TileType.Empty instead.
-    /// 
-    /// </summary>
-    /// <param name="tiles"></param>
-    /// <param name="x"></param>
-    /// <param name="z"></param>
-    /// <returns></returns>
-    public TileType[] GetNeighbors(TileType[,] tiles, int x, int z)
-    {
-        TileType[] toReturn = new TileType[6];
-        for (int direction = 0; direction < 6; direction++)
-        {
-            toReturn[direction] = GetNeighbor(tiles, x, z, direction);
-        }
-        return toReturn;
-    }
-
-    public TileType MakeBeaches(TileType[,] tiles, int x, int z)
-    {
-        // Get our tile
-        TileType ourTile = tiles[x, z];
-        // If we are not grass (i.e., water) then ignore.
-        if (ourTile != TileType.Grass)
-        {
-            return ourTile;
-        }
-
-        // Check our neighbors. If any are water, return sand.
-        TileType[] neighbors = GetNeighbors(tiles, x, z);
-        if (neighbors.Any(tile => tile == TileType.Water))
-        {
-            return TileType.Sand;
-        }
-
-        // Landlocked, so just return grass.
-        return ourTile;
-    }
-
-    public TileType MakeForests(TileType[,] tiles, int x, int z)
-    {
-        TileType ourTile = tiles[x, z];
-        if (ourTile._material == TileType.MaterialType.Grass && !ourTile.HasImprovement())
-        {
-            int rand = Random.Range(0, 100);
-            // Lumber camp is a visual test
-            //if (rand < 5)
-            //{
-            //    return TileType.LumberCamp;
-            //}
-            //else if (rand < 10)
-            //{
-            //    return TileType.Mill;
-            //}
-            //else if (rand < 80)
-            //{
-            //    return TileType.Forest;
-            //}
-            // 80% chance that grass turns into forest
-            if (rand < 80)
-            {
-                return TileType.Forest;
-            }
-        }
-        return ourTile;
-    }
-
-    public TileType MakeOceans(TileType[,] tiles, int x, int z)
-    {
-        TileType ourTile = tiles[x, z];
-        if (ourTile._material == TileType.MaterialType.Water)
-        {
-            float noiseValue = noiseGenerator.GetValueNormalized(x, z);
-            //if (noiseValue < 0.525f)
-            //{
-            //    return TileType.ShallowWater;
-            //}
-            if (noiseValue > 0.575f)
-            {
-                return TileType.DeepWater;
-            }
-        }
-        return ourTile;
-    }
-
-    public TileType MakeMountains(TileType[,] tiles, int x, int z)
-    {
-        TileType ourTile = tiles[x, z];
-        if (ourTile._material == TileType.MaterialType.Grass && !ourTile.HasImprovement())
-        {
-            int rand = Random.Range(0, 100);
-
-            float noiseValue = noiseGenerator.GetValueNormalized(x, z);
-            if (noiseValue < 0.5f && rand < 5)
-            {
-                return TileType.Stone;
-            }
-            if (noiseValue < 0.4f && rand < 75)
-            {
-                return TileType.Mountain;
-            }
-        }
-        return ourTile;
-    }
-
+    
     public TileType MakeEdge(TileType[,] tiles, int x, int z)
     {
         int boundarySize = 10;
@@ -252,6 +80,8 @@ public class WorldGenerator : MonoBehaviour
     /// <returns></returns>
     public TileType[,] Generate()
     {
+        Random.InitState(randomSeed);
+
         // Initialize all tiles to water to start.
         TileType[,] lastTiles = new TileType[width, height];
         for (int i = 0; i < width; i++)
@@ -279,8 +109,10 @@ public class WorldGenerator : MonoBehaviour
         {
             new WorldGenOceans(),
             new WorldGenBeaches(),
-            new WorldGenMountains(),
-            // new WorldGenForests(),
+            //new WorldGenMountains(),
+            new WorldGenForests(),
+            //new WorldGenZoomFuzzy(),
+            //new WorldGenZoomFuzzy(),
             new WorldGenZoom(),
             new WorldGenZoom(),
             new WorldGenBeaches(),
@@ -308,6 +140,11 @@ public class WorldGenerator : MonoBehaviour
             lastTiles = tiles;
             tiles = lastTiles.Clone() as TileType[,];
         }
+
+        // I don't really like how this looks. It's a basic river carver
+        //CarverRiver carverRiver = new CarverRiver();
+        //carverRiver.Carve(ref tiles, this.noiseGenerator);
+
         return tiles;
     }
 
@@ -443,6 +280,9 @@ public class WorldGenerator : MonoBehaviour
         // Replace the tile in the relevant arrays
         allCells[x, z] = newCell;
         allTiles[x, z] = newTile;
+
+        // Update fog of war
+        this.GetComponent<FogOfWarManager>().AddPlayerControlledTile(new Vector2Int(z, x), 4);
 
         this.StartCoroutine(SwapTiles(cellToReplace, newCell, 0.5f));
     }
